@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 
 namespace WebServer
 {
@@ -72,7 +73,10 @@ namespace WebServer
                 inFromClient = inFromClient + Encoding.ASCII.GetString(bytesReceived, 0, bytes);
             }
             while (bytes > 0);
-            Console.WriteLine(inFromClient);
+            string ops = "Server get messege: " + inFromClient;
+            Console.WriteLine(ops);
+            bytesSent = Encoding.ASCII.GetBytes(ops);
+            socket.Send(bytesSent, bytesSent.Length, 0);
         }
     }
     class MyServer
@@ -94,25 +98,38 @@ namespace WebServer
             localaddr = localhost.AddressList[0];
             return localaddr;
         }
-        public void start()
+        public void Start()
         {
             try
             {
                 TcpListener server = new TcpListener(local, port);
+                Console.WriteLine("准备启动服务器...");
+                server.Start();
+                Console.WriteLine("服务器启动...");
+                while (true)
+                {
+                    Socket socket = server.AcceptSocket();
+                    MyServerConnection conn = new MyServerConnection(socket);
+                    Console.WriteLine("连接中...");
+                    Thread thd = new Thread(new ThreadStart(conn.run));
+                    thd.Start();
+                }
             }
-            catch
+            catch (Exception e)
             {
-                Console.WriteLine("W_W");
+                Console.WriteLine("W_W:" + e.ToString());
                 return;
             }
             
         }
-        
     }
-    
+    class MyClient
+    {
+
+    }
     class Program
     {
-        static void Main(string[] args)
+        public static void useTest()
         {
             MySocket my = new MySocket();
             string host;
@@ -123,6 +140,33 @@ namespace WebServer
             string result = my.SocketSendReceive(host, port);
             Console.WriteLine(result);
             Console.ReadLine();
+        }
+        public static void useServer()
+        {
+            MyServer server = new MyServer();
+            server.Start();
+        }
+        public static void useClient()
+        {
+
+        }
+        static void Main(string[] args)
+        {
+            string cmd;
+            Console.WriteLine("0-Test, 1-Server, 2-Client");
+            cmd = Console.ReadLine();
+            if (cmd.Equals("1"))
+            {
+                useServer();
+            }
+            else if (cmd.Equals("2"))
+            {
+                useClient();
+            }
+            else if (cmd.Equals("0"))
+            {
+                useTest();
+            }
         }
     }
 }
