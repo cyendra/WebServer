@@ -17,7 +17,15 @@ namespace WebServer
         private int port;
         public CyWebServer()
         {
+            try
+            {
+                tcpListener = new TcpListener(GetLocalIp(), port);
+                tcpListener.Start();
+            }
+            catch (Exception e)
+            {
 
+            }
         }
         private IPAddress GetLocalIp()
         {
