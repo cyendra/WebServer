@@ -307,8 +307,7 @@ namespace WebServer
                     {
                         int iTotBytes = 0;
                         sResponse = "";
-                        FileStream fs = new FileStream(sPhysicalFilePath, FileMode.Open, FileAccess.Read,
-                        FileShare.Read);
+                        FileStream fs = new FileStream(sPhysicalFilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
                         // 创建一个能够从FileStream中读取字节数据的reader
                         BinaryReader reader = new BinaryReader(fs);
                         byte[] bytes = new byte[fs.Length];
