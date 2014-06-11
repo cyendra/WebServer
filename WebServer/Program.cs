@@ -65,18 +65,34 @@ namespace WebServer
         Byte[] bytesReceived = new Byte[1024];
         public void run()
         {
-            int bytes = 0;
-            string inFromClient = "";
-            do
+            Console.WriteLine("在线程中进行通信...");
+            while (true)
             {
-                bytes = socket.Receive(bytesReceived, bytesReceived.Length, 0);
-                inFromClient = inFromClient + Encoding.ASCII.GetString(bytesReceived, 0, bytes);
+                int bytes = 0;
+                string inFromClient = "";
+                Console.WriteLine("准备接受客户端的信息...");
+                do
+                {
+                    //Console.WriteLine("socket.Available = " + socket.Available);
+                    bytes = socket.Receive(bytesReceived, bytesReceived.Length, 0);
+                    inFromClient = inFromClient + Encoding.ASCII.GetString(bytesReceived, 0, bytes);
+                    //Console.WriteLine("收到 " + bytes + "字节");
+                    //Console.WriteLine("socket.Available = " + socket.Available);
+                }
+                while (socket.Available > 0);
+                string ops = "Server get messege: " + inFromClient;
+                Console.WriteLine("收到来自客户端的信息：");
+                Console.WriteLine(inFromClient);
+                bytesSent = Encoding.ASCII.GetBytes(ops);
+                socket.Send(bytesSent, bytesSent.Length, 0);
+                if (inFromClient.Equals("exit"))
+                {
+                    Console.WriteLine("客户端准备关闭连接...");
+                    break;
+                }
             }
-            while (bytes > 0);
-            string ops = "Server get messege: " + inFromClient;
-            Console.WriteLine(ops);
-            bytesSent = Encoding.ASCII.GetBytes(ops);
-            socket.Send(bytesSent, bytesSent.Length, 0);
+            socket.Close();
+            Console.WriteLine("连接已关闭...");
         }
     }
     class MyServer
@@ -104,13 +120,14 @@ namespace WebServer
             {
                 TcpListener server = new TcpListener(local, port);
                 Console.WriteLine("准备启动服务器...");
+                Console.WriteLine("本机IP：" + local.ToString() + " 监听端口号：" + port);
                 server.Start();
                 Console.WriteLine("服务器启动...");
                 while (true)
                 {
                     Socket socket = server.AcceptSocket();
+                    Console.WriteLine("收到一个连接...");
                     MyServerConnection conn = new MyServerConnection(socket);
-                    Console.WriteLine("连接中...");
                     Thread thd = new Thread(new ThreadStart(conn.run));
                     thd.Start();
                 }
@@ -120,12 +137,78 @@ namespace WebServer
                 Console.WriteLine("W_W:" + e.ToString());
                 return;
             }
-            
         }
     }
     class MyClient
     {
-
+        public MyClient()
+        {
+            //port = 2567;
+            port = 3721;
+            local = GetLocalIp();
+        }
+        int port;
+        IPAddress local;
+        Socket socket;
+        string sentStr;
+        string receivedStr;
+        Byte[] bytesSent;
+        Byte[] bytesReceived = new Byte[1024];
+        private IPAddress GetLocalIp()
+        {
+            string hostname;
+            IPHostEntry localhost;
+            IPAddress localaddr;
+            hostname = System.Net.Dns.GetHostName();
+            localhost = System.Net.Dns.GetHostEntry(hostname);
+            localaddr = localhost.AddressList[0];
+            return localaddr;
+        }
+        public void Start()
+        {
+            Console.WriteLine("准备开始连接服务器...");
+            Console.WriteLine("服务器IP：" + local.ToString() + " 端口号：" + port);
+            IPEndPoint ipe = new IPEndPoint(local, port);
+            try
+            {
+                socket = new Socket(ipe.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                socket.Connect(ipe);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("连接失败！");
+                Console.WriteLine(e.Message);
+                return;
+            }
+            Console.WriteLine("服务器已连接...");
+            while (true)
+            {
+                Console.WriteLine("请输入要发送的信息：");
+                sentStr = Console.ReadLine();
+                bytesSent = Encoding.ASCII.GetBytes(sentStr);
+                Console.WriteLine("准备发送 信息：" + sentStr + " 到服务器...");
+                socket.Send(bytesSent, bytesSent.Length, 0);
+                Console.WriteLine("成功了！终于发出去了！");
+                int bytes = 0;
+                receivedStr = "";
+                Console.WriteLine("准备接受服务器的信息...");
+                do
+                {
+                    bytes = socket.Receive(bytesReceived, bytesReceived.Length, 0);
+                    receivedStr = receivedStr + Encoding.ASCII.GetString(bytesReceived, 0, bytes);
+                    Console.WriteLine("收到 " + bytes + "字节");
+                } while (socket.Available > 0);
+                Console.WriteLine("收到服务器发来的信息：");
+                Console.WriteLine(receivedStr);
+                if (sentStr.Equals("exit"))
+                {
+                    Console.WriteLine("准备关闭客户端...");
+                    break;
+                }
+            }
+            socket.Close();
+            Console.WriteLine("客户端已关闭...");
+        }
     }
     class Program
     {
@@ -148,7 +231,8 @@ namespace WebServer
         }
         public static void useClient()
         {
-
+            MyClient client = new MyClient();
+            client.Start();
         }
         static void Main(string[] args)
         {
