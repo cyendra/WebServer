@@ -8,6 +8,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 
+
 namespace WebServer
 {
     class MySocket
@@ -234,10 +235,15 @@ namespace WebServer
             MyClient client = new MyClient();
             client.Start();
         }
+        public static void testWebServer()
+        {
+            CyWebServer sr = new CyWebServer();
+           // MyWebServer sr = new MyWebServer();
+        }
         static void Main(string[] args)
         {
             string cmd;
-            Console.WriteLine("0-Test, 1-Server, 2-Client");
+            Console.WriteLine("0-Test, 1-Server, 2-Client 3-WebServer");
             cmd = Console.ReadLine();
             if (cmd.Equals("1"))
             {
@@ -250,6 +256,10 @@ namespace WebServer
             else if (cmd.Equals("0"))
             {
                 useTest();
+            }
+            else if (cmd.Equals("3"))
+            {
+                testWebServer();
             }
         }
     }
